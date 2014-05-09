@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7D93011E-53D3-4B85-9F68-12FACB8E4D69}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>My2JpegToRGBA</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110_xp</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\CppLib\jpeglib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\CppLib\jpeglib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>jpeglibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>LIBC.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pngopt\libPNG\png.h" />
+    <ClInclude Include="pngopt\libPNG\pngconf.h" />
+    <ClInclude Include="pngopt\pngopt.h" />
+    <ClInclude Include="pngopt\ZLIB\crc32.h" />
+    <ClInclude Include="pngopt\ZLIB\deflate.h" />
+    <ClInclude Include="pngopt\ZLIB\inffast.h" />
+    <ClInclude Include="pngopt\ZLIB\inffixed.h" />
+    <ClInclude Include="pngopt\ZLIB\inflate.h" />
+    <ClInclude Include="pngopt\ZLIB\inftrees.h" />
+    <ClInclude Include="pngopt\ZLIB\trees.h" />
+    <ClInclude Include="pngopt\ZLIB\zconf.h" />
+    <ClInclude Include="pngopt\ZLIB\zconf.in.h" />
+    <ClInclude Include="pngopt\ZLIB\zlib.h" />
+    <ClInclude Include="pngopt\ZLIB\zutil.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="2JpegToRGBA.cpp" />
+    <ClCompile Include="pngopt\libPNG\png.c" />
+    <ClCompile Include="pngopt\libPNG\pngerror.c" />
+    <ClCompile Include="pngopt\libPNG\pnggccrd.c" />
+    <ClCompile Include="pngopt\libPNG\pngget.c" />
+    <ClCompile Include="pngopt\libPNG\pngmem.c" />
+    <ClCompile Include="pngopt\libPNG\pngpread.c" />
+    <ClCompile Include="pngopt\libPNG\pngread.c" />
+    <ClCompile Include="pngopt\libPNG\pngrio.c" />
+    <ClCompile Include="pngopt\libPNG\pngrtran.c" />
+    <ClCompile Include="pngopt\libPNG\pngrutil.c" />
+    <ClCompile Include="pngopt\libPNG\pngset.c" />
+    <ClCompile Include="pngopt\libPNG\pngtrans.c" />
+    <ClCompile Include="pngopt\libPNG\pngvcrd.c" />
+    <ClCompile Include="pngopt\libPNG\pngwio.c" />
+    <ClCompile Include="pngopt\libPNG\pngwrite.c" />
+    <ClCompile Include="pngopt\libPNG\pngwtran.c" />
+    <ClCompile Include="pngopt\libPNG\pngwutil.c" />
+    <ClCompile Include="pngopt\pngopt.cpp" />
+    <ClCompile Include="pngopt\savepngpitch.cpp" />
+    <ClCompile Include="pngopt\ZLIB\adler32.c" />
+    <ClCompile Include="pngopt\ZLIB\compress.c" />
+    <ClCompile Include="pngopt\ZLIB\crc32.c" />
+    <ClCompile Include="pngopt\ZLIB\deflate.c" />
+    <ClCompile Include="pngopt\ZLIB\gzio.c" />
+    <ClCompile Include="pngopt\ZLIB\infback.c" />
+    <ClCompile Include="pngopt\ZLIB\inffast.c" />
+    <ClCompile Include="pngopt\ZLIB\inflate.c" />
+    <ClCompile Include="pngopt\ZLIB\inftrees.c" />
+    <ClCompile Include="pngopt\ZLIB\trees.c" />
+    <ClCompile Include="pngopt\ZLIB\uncompr.c" />
+    <ClCompile Include="pngopt\ZLIB\zutil.c" />
+    <ClCompile Include="stdafx.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

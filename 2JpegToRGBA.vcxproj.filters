@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="pngopt">
+      <UniqueIdentifier>{f679c37c-1712-4798-97f7-78ff5e7e85bf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\libPNG\png.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\libPNG\pngconf.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\pngopt.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\crc32.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\deflate.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\inffast.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\inffixed.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\inflate.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\inftrees.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\trees.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\zconf.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\zconf.in.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\zlib.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+    <ClInclude Include="pngopt\ZLIB\zutil.h">
+      <Filter>pngopt</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="2JpegToRGBA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\png.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngerror.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pnggccrd.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngget.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngmem.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngpread.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngread.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngrio.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngrtran.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngrutil.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngset.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngtrans.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngvcrd.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngwio.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngwrite.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngwtran.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\libPNG\pngwutil.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\pngopt.cpp">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\savepngpitch.cpp">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\adler32.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\compress.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\crc32.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\deflate.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\gzio.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\infback.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\inffast.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\inflate.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\inftrees.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\trees.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\uncompr.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+    <ClCompile Include="pngopt\ZLIB\zutil.c">
+      <Filter>pngopt</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
