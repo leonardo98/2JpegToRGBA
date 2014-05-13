@@ -50,7 +50,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		Quality = atoi(argv[4]);
 		if (png_texture_load(argv[2], &Width, &Height, ImageBuffer) != 0)
 		{
-			printf("can't load file: %s\n", argv[2]);
 			unsigned char *rgb = new unsigned char[Width * Height * 3];
 			unsigned char *alpha = new unsigned char[Width * Height];
 			for (unsigned int i = 0; i < Width; ++i)
@@ -70,6 +69,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			write_JPEG_file(buff, Quality, alpha, 1);
 			delete [] rgb;
 			delete [] alpha;
+		}
+		else
+		{
+			printf("can't load file: %s\n", argv[2]);
 		}
 	}
 	else if (task == "check")
