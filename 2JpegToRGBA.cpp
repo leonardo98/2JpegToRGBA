@@ -5,12 +5,12 @@
 #include "pngopt/pngopt.h"
 #include <stdio.h>
 #include <string>
+#include "Timing.h"
 
 extern "C" {
 #include "jpeglib.h"
 #include "setjmp.h"
 }
-
 
 unsigned char *ImageBuffer = NULL;
 int Width; 
@@ -97,6 +97,31 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		fclose(fp);
+	}
+	else if (task == "test")
+	{
+		{
+			Timing timer;
+			timer.StartTiming();
+			read_JPEG_file(argv[2]);
+			read_JPEG_file(argv[3]);
+			timer.StopTiming();
+			delete [] ImageBuffer;
+			printf("2 jpeg loading time: ");
+			printf("%.3G seconds.\n", timer.GetUserSeconds());
+		}
+
+		{
+			Timing timer;
+			timer.StartTiming();
+			if (png_texture_load(argv[4], &Width, &Height, ImageBuffer) == 0)
+			{
+				printf("can't load file: %s\n", argv[4]);
+			}
+			timer.StopTiming();
+			printf("png loading time: ");
+			printf("%.3G seconds.\n", timer.GetUserSeconds());
+		}
 	}
 	else
 	{

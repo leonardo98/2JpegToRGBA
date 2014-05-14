@@ -69,6 +69,9 @@
     <ClInclude Include="pngopt\ZLIB\zutil.h">
       <Filter>pngopt</Filter>
     </ClInclude>
+    <ClInclude Include="Timing.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
