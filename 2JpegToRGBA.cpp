@@ -12,42 +12,31 @@ extern "C" {
 #include "setjmp.h"
 }
 
-unsigned char *ImageBuffer = NULL;
-int Width; 
-int Height;
-int Quality;
-
-int read_JPEG_file (const char * filename);
+int read_JPEG_file (const char * filename, int &width, int &height, unsigned char *&image_buffer);
 GLOBAL(void)
-write_JPEG_file (char * filename, int quality, unsigned char *image_buffer, int component);
+write_JPEG_file (char * filename, int quality, int width, int height, unsigned char *image_buffer, int component);
+void write32png(char *filename, unsigned char *imageBuffer, int width, int height);
+void PrintUsage();
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 
-	if (argc != 5)
+	unsigned char *ImageBuffer = NULL;
+	int Width; 
+	int Height;
+	int JpegSaveQuality;
+
+	if (argc <= 2)
 	{
-		printf("usage:\n2JpegToGRBA compress <rgba_png> <output_base_name> <Quality>\nor\n2JpegToGRBA check <rgb_jpeg> <alpha(grayscaled)_jpeg> <output_png>\n");
+		PrintUsage();
 		return 0;
 	}
 
-	/* beautifull image
-	for (unsigned int i = 0; i < 256; ++i)
-	{
-		for (unsigned int j = 0; j < 256; ++j)
-		{
-			ImageBuffer[(i + j * 256) * 4] = i;
-			ImageBuffer[(i + j * 256) * 4 + 1] = 255 - j;
-			ImageBuffer[(i + j * 256) * 4 + 2] = 255;
-			ImageBuffer[(i + j * 256) * 4 + 3] = 255;
-		}
-	}
-	*/
-
 	std::string task = argv[1];
 
-	if (task == "compress")
+	if (task == "compress" && argc == 5)
 	{
-		Quality = atoi(argv[4]);
+		JpegSaveQuality = atoi(argv[4]);
 		if (png_texture_load(argv[2], &Width, &Height, ImageBuffer) != 0)
 		{
 			unsigned char *rgb = new unsigned char[Width * Height * 3];
@@ -64,9 +53,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			char buff[100];
 			sprintf(buff, "%s_rgb.jpg", argv[3]);
-			write_JPEG_file(buff, Quality, rgb, 3);
+			write_JPEG_file(buff, JpegSaveQuality, Width, Height, rgb, 3);
 			sprintf(buff, "%s_alpha.jpg", argv[3]);
-			write_JPEG_file(buff, Quality, alpha, 1);
+			write_JPEG_file(buff, JpegSaveQuality, Width, Height, alpha, 1);
 			delete [] rgb;
 			delete [] alpha;
 		}
@@ -75,36 +64,25 @@ int _tmain(int argc, _TCHAR* argv[])
 			printf("can't load file: %s\n", argv[2]);
 		}
 	}
-	else if (task == "check")
+	else if (task == "check" && argc == 5)
 	{
-		read_JPEG_file(argv[2]);
-		read_JPEG_file(argv[3]);
+		// вызываем для jpg цветного и для градаций серого - порядок вызова не важен
+		// функция не делает проверки на совпадение размеров, 
+		// просто смотрит сколько компонент в изображении
+		// и пишет данные либо в RGB(3 компоненты), либо только в альфа канал(1 компонента)
+		read_JPEG_file(argv[2], Width, Height, ImageBuffer);
+		read_JPEG_file(argv[3], Width, Height, ImageBuffer);
 
-		FILE *fp = fopen(argv[4], "wb");
-		if(!fp)
-		{
-			printf("Can't write to file.\n");
-			return -1;
-		}
+		write32png(argv[4], ImageBuffer, Width, Height);
 
-		if(!Write32BitPNGWithPitch(fp, ImageBuffer, true, Width, Height, Width))
-		{
-			printf("Error writing data.\n");
-		}
-		else
-		{
-			printf("Ok\n");
-		}
-
-		fclose(fp);
 	}
-	else if (task == "test")
+	else if (task == "test" && argc == 5)
 	{
 		{
 			Timing timer;
 			timer.StartTiming();
-			read_JPEG_file(argv[2]);
-			read_JPEG_file(argv[3]);
+			read_JPEG_file(argv[2], Width, Height, ImageBuffer);
+			read_JPEG_file(argv[3], Width, Height, ImageBuffer);
 			timer.StopTiming();
 			delete [] ImageBuffer;
 			printf("2 jpeg loading time: ");
@@ -123,15 +101,108 @@ int _tmain(int argc, _TCHAR* argv[])
 			printf("%.3G seconds.\n", timer.GetUserSeconds());
 		}
 	}
+	else if (task == "beauty" && argc == 3)
+	{
+		// beautifull image
+		ImageBuffer = new unsigned char[256 * 256 * 3];
+		Width = 256; 
+		Height = 256;
+		JpegSaveQuality = 50;
+		for (unsigned int i = 0; i < 256; ++i)
+		{
+			for (unsigned int j = 0; j < 256; ++j)
+			{
+				ImageBuffer[(i + j * 256) * 3] = i;
+				ImageBuffer[(i + j * 256) * 3 + 1] = 255 - j;
+				ImageBuffer[(i + j * 256) * 3 + 2] = 255;
+			}
+		}
+		write_JPEG_file(argv[2], JpegSaveQuality, Width, Height, ImageBuffer, 3);
+	}
+	else if (task == "slice" && argc == 4)
+	{
+		if (png_texture_load(argv[2], &Width, &Height, ImageBuffer) != 0)
+		{
+			unsigned char *rc = new unsigned char[Width * Height];
+			for (int c = 0; c < 4; ++c)
+			{
+				for (unsigned int i = 0; i < Width; ++i)
+				{
+					for (unsigned int j = 0; j < Height; ++j)
+					{
+						rc[i + j * Width] = ImageBuffer[(i + j * Width) * 4 + c];
+					}
+				}
+				char buff[100];
+				sprintf(buff, "%s_%i.jpg", argv[3], c);
+				write_JPEG_file(buff, 100, Width, Height, rc, 1);
+			}
+		}
+		else
+		{
+			printf("can't load file: %s\n", argv[2]);
+		}
+	}
+	else if (task == "merge" && argc == 7)
+	{
+		char rgba[4] = {2, 1, 0, 3};
+		for (int c = 0; c < 4; ++c)
+		{
+			read_JPEG_file(argv[2 + rgba[c]], Width, Height, ImageBuffer);
+			if (c == 3)
+			{
+				continue;
+			}
+			for (unsigned int i = 0; i < Width; ++i)
+			{
+				for (unsigned int j = 0; j < Height; ++j)
+				{
+					ImageBuffer[(i + j * Width) * 4 + c] = ImageBuffer[(i + j * Width) * 4 + 3];
+				}
+			}
+		}
+		write32png(argv[6], ImageBuffer, Width, Height);
+	}
 	else
 	{
-		printf("usage:\n2JpegToGRBA compress <rgba_png> <output_base_name> <Quality>\nor\n2JpegToGRBA check <rgb_jpeg> <alpha(grayscaled)_jpeg> <output_png>\n");
+		PrintUsage();
 		return 0;
 	}
 
 	delete [] ImageBuffer;
 
 	return 0;
+}
+
+void PrintUsage()
+{
+	printf("usage:\n2JpegToGRBA compress <rgba_png> <output_base_name> <Quality> (save PNG as Dowble JGP)\n");
+	printf("2JpegToGRBA check <rgb_jpeg> <alpha(grayscaled)_jpeg> <output_png> (save Dowble JGP as PNG)\n");
+	printf("2JpegToGRBA test <rgb_jpeg> <alpha(grayscaled)_jpeg> <rgba_png> (loading speed test: dowble JPG vs PNG)\n");
+	printf("2JpegToGRBA beauty <output_jpeg> (create beautifull image)\n");
+	printf("2JpegToGRBA slice <rgba_png> <output_base_name> (slice RGBA png to 4 channal grayscale)\n");
+	printf("2JpegToGRBA merge <channal0_jpg> <channal1_jpg> <channal2_jpg> <channal3_jpg> <output_png> (merge 4 grayscaled channal \"RGBA\" to one RGBA_png)\n");
+}
+
+void write32png(char *filename, unsigned char *imageBuffer, int width, int height)
+{
+	FILE *fp = fopen(filename, "wb");
+	if(!fp)
+	{
+		printf("Can't write to file.\n");
+		return;
+	}
+
+	if(!Write32BitPNGWithPitch(fp, imageBuffer, true, width, height, width))
+	{
+		printf("Error writing data.\n");
+	}
+	else
+	{
+		printf("Ok\n");
+	}
+
+	fclose(fp);
 }
 
 struct my_error_mgr {
@@ -157,7 +228,7 @@ my_error_exit (j_common_ptr cinfo)
   longjmp(myerr->setjmp_buffer, 1);
 }
 
-int read_JPEG_file (const char * filename)
+int read_JPEG_file (const char * filename, int &width, int &height, unsigned char *&image_buffer)
 {
     struct jpeg_decompress_struct cinfo;
     struct my_error_mgr jerr;
@@ -210,14 +281,13 @@ int read_JPEG_file (const char * filename)
     /* Make a one-row-high sample array that will go away when done with image */
     buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
 
-    Width = cinfo.output_width;
-    Height = cinfo.output_height;
+    width = cinfo.output_width;
+    height = cinfo.output_height;
 
-	if (ImageBuffer == NULL)
+	if (image_buffer == NULL)
 	{
-	    ImageBuffer = new unsigned char [cinfo.output_width * cinfo.output_height * 4];
+	    image_buffer = new unsigned char [cinfo.output_width * cinfo.output_height * 4];
 	}
-    //ImageBuffer = new unsigned char [cinfo.output_width * cinfo.output_height * cinfo.output_components];
     long counter = 0;
 	
 	buffer[0] = (JSAMPROW)malloc(sizeof(JSAMPLE) * row_stride);
@@ -231,12 +301,11 @@ int read_JPEG_file (const char * filename)
 			jpeg_read_scanlines(&cinfo, buffer, 1);
 			for (unsigned int i = 0; i < row_stride; i += 3)
 			{
-				ImageBuffer[imageBytes] = buffer[0][i + 2];
-				ImageBuffer[imageBytes + 1] = buffer[0][i + 1];
-				ImageBuffer[imageBytes + 2] = buffer[0][i];
+				image_buffer[imageBytes] = buffer[0][i + 2];
+				image_buffer[imageBytes + 1] = buffer[0][i + 1];
+				image_buffer[imageBytes + 2] = buffer[0][i];
 				imageBytes += 4;
 			}
-			//memcpy(ImageBuffer + counter, buffer[0], row_stride);
 			counter += row_stride;
 		}	
 	}
@@ -246,7 +315,7 @@ int read_JPEG_file (const char * filename)
 			jpeg_read_scanlines(&cinfo, buffer, 1);
 			for (unsigned int i = 0; i < row_stride; ++i)
 			{
-				ImageBuffer[imageBytes + 3] = buffer[0][i];
+				image_buffer[imageBytes + 3] = buffer[0][i];
 				imageBytes += 4;
 			}
 			counter += row_stride;
@@ -271,7 +340,7 @@ int read_JPEG_file (const char * filename)
 }
 
 GLOBAL(void)
-write_JPEG_file (char * filename, int quality, unsigned char *image_buffer, int component)
+write_JPEG_file (char * filename, int quality, int width, int height, unsigned char *image_buffer, int component)
 {
   /* This struct contains the JPEG compression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -324,8 +393,8 @@ write_JPEG_file (char * filename, int quality, unsigned char *image_buffer, int 
   /* First we supply a description of the input image.
    * Four fields of the cinfo struct must be filled in:
    */
-  cinfo.image_width = Width; 	/* image width and height, in pixels */
-  cinfo.image_height = Height;
+  cinfo.image_width = width; 	/* image width and height, in pixels */
+  cinfo.image_height = height;
   if (component == 3)
   {
 	  cinfo.input_components = 3;		/* # of color components per pixel */
@@ -366,7 +435,7 @@ write_JPEG_file (char * filename, int quality, unsigned char *image_buffer, int 
    * To keep things simple, we pass one scanline per call; you can pass
    * more if you wish, though.
    */
-  row_stride = Width * cinfo.input_components;	/* JSAMPLEs per row in image_buffer */
+  row_stride = width * cinfo.input_components;	/* JSAMPLEs per row in image_buffer */
 
   while (cinfo.next_scanline < cinfo.image_height) {
     /* jpeg_write_scanlines expects an array of pointers to scanlines.
