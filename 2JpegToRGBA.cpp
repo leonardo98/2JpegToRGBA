@@ -1,10 +1,13 @@
-// 2JpegToRGBA.cpp : Defines the entry point for the console application.
+﻿// 2JpegToRGBA.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"
 #include "pngopt/pngopt.h"
 #include <stdio.h>
 #include <string>
+#include <map>
+#include <vector>
+#include <algorithm>
 #include "Timing.h"
 
 extern "C" {
@@ -17,6 +20,8 @@ GLOBAL(void)
 write_JPEG_file (char * filename, int quality, int width, int height, unsigned char *image_buffer, int component);
 void write32png(char *filename, unsigned char *imageBuffer, int width, int height);
 void PrintUsage();
+void writeFastPng(char *filename, unsigned char *imageBuffer, int width, int height);
+void Downscale(int inputWidth, int inputHeight, unsigned char *InputBuffer, int Width, int Height, unsigned char *ResultBuffer);
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -41,9 +46,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			unsigned char *rgb = new unsigned char[Width * Height * 3];
 			unsigned char *alpha = new unsigned char[Width * Height];
-			for (unsigned int i = 0; i < Width; ++i)
+			for (int i = 0; i < Width; ++i)
 			{
-				for (unsigned int j = 0; j < Height; ++j)
+				for (int j = 0; j < Height; ++j)
 				{
 					rgb[(i + j * Width) * 3] = ImageBuffer[(i + j * Width) * 4];
 					rgb[(i + j * Width) * 3 + 1] = ImageBuffer[(i + j * Width) * 4 + 1];
@@ -64,16 +69,79 @@ int _tmain(int argc, _TCHAR* argv[])
 			printf("can't load file: %s\n", argv[2]);
 		}
 	}
+	else if (task == "fastpng" && argc == 4)
+	{
+		if (png_texture_load(argv[2], &Width, &Height, ImageBuffer) != 0)
+		{
+			writeFastPng(argv[3], ImageBuffer, Width, Height);
+		}
+		else
+		{
+			printf("can't load file: %s\n", argv[2]);
+		}
+	}
 	else if (task == "check" && argc == 5)
 	{
-		// �������� ��� jpg �������� � ��� �������� ������ - ������� ������ �� �����
-		// ������� �� ������ �������� �� ���������� ��������, 
-		// ������ ������� ������� ��������� � �����������
-		// � ����� ������ ���� � RGB(3 ����������), ���� ������ � ����� �����(1 ����������)
+		// вызываем для jpg цветного и для градаций серого - порядок вызова не важен
+		// функция не делает проверки на совпадение размеров, 
+		// просто смотрит сколько компонент в изображении
+		// и пишет данные либо в RGB(3 компоненты), либо только в альфа канал(1 компонента)
 		read_JPEG_file(argv[2], Width, Height, ImageBuffer);
 		read_JPEG_file(argv[3], Width, Height, ImageBuffer);
 
 		write32png(argv[4], ImageBuffer, Width, Height);
+
+	}
+	else if (task == "add" && argc == 7) 
+	{
+		// вызываем для jpg цветного и для градаций серого - порядок вызова не важен
+		// функция не делает проверки на совпадение размеров, 
+		// просто смотрит сколько компонент в изображении
+		// и пишет данные либо в RGB(3 компоненты), либо только в альфа канал(1 компонента)
+
+		read_JPEG_file(argv[2], Width, Height, ImageBuffer); // исходный файл
+
+		int outputWidth = atoi(argv[3]);
+		int outputHeight = atoi(argv[4]);
+
+		int addWidth;
+		int addHeight;
+		unsigned char *addBuffer;
+		png_texture_load(argv[5], &addWidth, &addHeight, addBuffer);
+
+		unsigned char *ResultBuffer  = new unsigned char [outputWidth * outputHeight * 4];
+
+		Downscale(Width, Height, ImageBuffer, outputWidth, outputHeight, ResultBuffer);
+
+		unsigned char *rgb = new unsigned char[outputWidth * outputHeight * 3];
+		for (int i = 0; i < outputWidth; ++i)
+		{
+			for (int j = 0; j < outputHeight; ++j)
+			{
+				rgb[(i + j * outputWidth) * 3 + 0] = ResultBuffer[(i + j * outputWidth) * 4 + 2];
+				rgb[(i + j * outputWidth) * 3 + 1] = ResultBuffer[(i + j * outputWidth) * 4 + 1];
+				rgb[(i + j * outputWidth) * 3 + 2] = ResultBuffer[(i + j * outputWidth) * 4 + 0];
+			}
+		}
+		for (int i = 0; i < addWidth; ++i)
+		{
+			for (int j = 0; j < addHeight; ++j)
+			{
+				float a = addBuffer[(i + j * addWidth) * 4 + 3] / 255.f;
+				int src = (i + j * addWidth) * 4;
+				unsigned int dst = ((outputWidth - addWidth) + i + (outputHeight - addHeight + j) * outputWidth) * 3;
+				rgb[dst + 0] = rgb[dst + 0] * (1 - a) + a * addBuffer[src + 0];
+				rgb[dst + 1] = rgb[dst + 1] * (1 - a) + a * addBuffer[src + 1];
+				rgb[dst + 2] = rgb[dst + 2] * (1 - a) + a * addBuffer[src + 2];
+			}
+		}
+
+		JpegSaveQuality = 90;
+		write_JPEG_file(argv[6], JpegSaveQuality, outputWidth, outputHeight, rgb, 3);
+		//write32png(argv[5], ResultBuffer, inputWidth, inputHeight);
+		delete [] addBuffer;
+		delete [] ResultBuffer;
+		delete [] rgb;
 
 	}
 	else if (task == "test" && argc == 5)
@@ -119,6 +187,30 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		write_JPEG_file(argv[2], JpegSaveQuality, Width, Height, ImageBuffer, 3);
 	}
+	else if (task == "noise" && argc == 3)
+	{
+		// beautifull image
+		ImageBuffer = new unsigned char[256 * 256 * 3];
+		Width = 256; 
+		Height = 256;
+		JpegSaveQuality = 50;
+
+		int divWidth = Width;
+		int divHeight = Height;
+
+
+
+		for (unsigned int i = 0; i < 256; ++i)
+		{
+			for (unsigned int j = 0; j < 256; ++j)
+			{
+				ImageBuffer[(i + j * 256) * 3] = i;
+				ImageBuffer[(i + j * 256) * 3 + 1] = 255 - j;
+				ImageBuffer[(i + j * 256) * 3 + 2] = 255;
+			}
+		}
+		write_JPEG_file(argv[2], JpegSaveQuality, Width, Height, ImageBuffer, 3);
+	}
 	else if (task == "slice" && argc == 4)
 	{
 		if (png_texture_load(argv[2], &Width, &Height, ImageBuffer) != 0)
@@ -126,9 +218,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			unsigned char *rc = new unsigned char[Width * Height];
 			for (int c = 0; c < 4; ++c)
 			{
-				for (unsigned int i = 0; i < Width; ++i)
+				for (int i = 0; i < Width; ++i)
 				{
-					for (unsigned int j = 0; j < Height; ++j)
+					for (int j = 0; j < Height; ++j)
 					{
 						rc[i + j * Width] = ImageBuffer[(i + j * Width) * 4 + c];
 					}
@@ -153,15 +245,67 @@ int _tmain(int argc, _TCHAR* argv[])
 			{
 				continue;
 			}
-			for (unsigned int i = 0; i < Width; ++i)
+			for (int i = 0; i < Width; ++i)
 			{
-				for (unsigned int j = 0; j < Height; ++j)
+				for (int j = 0; j < Height; ++j)
 				{
 					ImageBuffer[(i + j * Width) * 4 + c] = ImageBuffer[(i + j * Width) * 4 + 3];
 				}
 			}
 		}
 		write32png(argv[6], ImageBuffer, Width, Height);
+	}
+	else if (task == "crop" && argc == 3)
+	{
+		int pitch;
+		if (png_texture_load(argv[2], &Width, &Height, ImageBuffer, &pitch) != 0)
+		{
+			bool exit = false;
+			for (int i = 0; i < Width && !exit; ++i)
+			{
+				for (int j = 0; j < Height && !exit; ++j)
+				{
+					if (ImageBuffer[i * 4 + j * pitch + 3] != 0)
+					{
+						exit = true;
+					}
+				}
+				if (exit)
+				{
+					printf("left: %i", i - 1);
+				}
+			}
+			if (exit)
+			{
+				bool exit = false;
+				for (int j = 0; j < Height && !exit; ++j)
+				{
+					for (int i = 0; i < Width && !exit; ++i)
+					{
+						if (ImageBuffer[i * 4 + j * pitch + 3] != 0)
+						{
+							exit = true;
+						}
+					}
+					if (exit)
+					{
+						printf("\ntop: %i", j - 1);
+					}
+				}
+				if (!exit)
+				{
+					printf("Error: wrong texture!\n");
+				}
+			}
+			else
+			{
+				printf("Error: wrong texture!\n");
+			}
+		}
+		else
+		{
+			printf("can't load file: %s\n", argv[2]);
+		}
 	}
 	else
 	{
@@ -182,6 +326,7 @@ void PrintUsage()
 	printf("2JpegToGRBA beauty <output_jpeg> (create beautifull image)\n");
 	printf("2JpegToGRBA slice <rgba_png> <output_base_name> (slice RGBA png to 4 channal grayscale)\n");
 	printf("2JpegToGRBA merge <channal0_jpg> <channal1_jpg> <channal2_jpg> <channal3_jpg> <output_png> (merge 4 grayscaled channal \"RGBA\" to one RGBA_png)\n");
+	printf("2JpegToGRBA crop <rgba_png> (calculate cropping values)\n");
 }
 
 void write32png(char *filename, unsigned char *imageBuffer, int width, int height)
@@ -299,7 +444,7 @@ int read_JPEG_file (const char * filename, int &width, int &height, unsigned cha
 	{
 		while (cinfo.output_scanline < cinfo.output_height) {
 			jpeg_read_scanlines(&cinfo, buffer, 1);
-			for (unsigned int i = 0; i < row_stride; i += 3)
+			for (int i = 0; i < row_stride; i += 3)
 			{
 				image_buffer[imageBytes] = buffer[0][i + 2];
 				image_buffer[imageBytes + 1] = buffer[0][i + 1];
@@ -458,4 +603,185 @@ write_JPEG_file (char * filename, int quality, int width, int height, unsigned c
   jpeg_destroy_compress(&cinfo);
 
   /* And we're done! */
+}
+
+void ReadBuffer(unsigned char *dest, unsigned char *src, int x, int y, int width)
+{
+	for (int j = 0; j < 16; ++j)
+	{
+		memcpy(&(dest[j * 16 * 4]), &(src[(x + (y * width)) * 4]), 16 * 4);
+	}
+}
+
+void writeFastPng(char *filename, unsigned char *imageBuffer, int width, int height)
+{
+	FILE *file = fopen(filename, "wb");
+	FILE *log = fopen("fpng.log", "wt");
+
+	unsigned char buffer[16 * 16 * 4];
+	std::map<DWORD, std::pair<unsigned int, unsigned int> > colorMap;
+	DWORD color;
+	std::vector<unsigned int> maxColors;
+	std::vector<unsigned int> masks;
+
+	for (int x = 0; x < width; x += 16)
+	{
+		for (int y = 0; y < height; y += 16)
+		{
+			colorMap.clear();
+			ReadBuffer(buffer, imageBuffer, x, y, width);
+
+			for (unsigned int i = 0; i < 16; ++i)
+			{
+				for (unsigned int j = 0; j < 16; ++j)
+				{
+					memcpy(&color, &(buffer[(i + j * 16) * 4]), 4);
+					std::map<DWORD, std::pair<unsigned int, unsigned int> >::iterator iter = colorMap.find(color);
+					if (iter == colorMap.end())
+					{
+						colorMap[color].first = 1;
+					}
+					else
+					{
+						++(iter->second.first);
+						//iter->second.second = 
+					}
+				}
+			}
+			maxColors.push_back(colorMap.size());
+		}
+	}
+
+	fprintf(log, "%i\n", maxColors.size());
+
+	std::sort(maxColors.rbegin(), maxColors.rend());
+	for (unsigned int i = 0; i < maxColors.size(); ++i)
+	{
+		fprintf(log, "%i\n", maxColors[i]);
+	}
+
+	fclose(log);
+	fclose(file);
+}
+
+void Downscale(int inputWidth, int inputHeight, unsigned char *InputBuffer, int Width, int Height, unsigned char *ResultBuffer)
+{
+	float *tmp = new float[Width * Height * 4];
+	float *mass = new float[Width * Height];
+	memset(tmp, 0, Width * Height * 4 * sizeof(float));
+	memset(mass, 0, Width * Height * sizeof(float));
+
+	float kx = float(Width) / inputWidth;
+	float ky = float(Height) / inputHeight;
+
+	for (int i = 0; i < inputWidth; ++i)
+	{
+		int di1 = floor(i * kx);
+		int di2 = floor((i + 1) * kx);
+
+		float koefXMul = 1.f;
+		if (di1 != di2)
+			koefXMul = di2 / kx - i;
+
+		if (koefXMul == 1.f)
+		{
+			for (int j = 0; j < inputHeight; ++j)
+			{
+				int dj1 = floor(j * ky);
+				int dj2 = floor((j + 1) * ky);
+
+				float koefYMul = 1.f;
+				if (dj1 != dj2)
+					koefYMul = dj2 / ky - j;
+
+				if (koefYMul == 1.f) // pixel inside new pixel
+				{
+					tmp[(di1 + dj1 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0];
+					tmp[(di1 + dj1 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1];
+					tmp[(di1 + dj1 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2];
+
+					mass[di1 + dj1 * Width] += 1.f;
+				}
+				else // pixel divided by vertical
+				{
+					tmp[(di1 + dj1 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * koefYMul;
+					tmp[(di1 + dj1 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * koefYMul;
+					tmp[(di1 + dj1 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * koefYMul;
+					
+					mass[di1 + dj1 * Width] += koefYMul;
+					
+					tmp[(di1 + dj2 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * (1.f - koefYMul);
+					tmp[(di1 + dj2 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * (1.f - koefYMul);
+					tmp[(di1 + dj2 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * (1.f - koefYMul);
+
+					mass[di1 + dj2 * Width] += (1.f - koefYMul);
+				}
+			}
+		}
+		else
+		{
+			for (int j = 0; j < inputHeight; ++j)
+			{
+				int dj1 = floor(j * ky);
+				int dj2 = floor((j + 1) * ky);
+
+				float koefYMul = 1.f;
+				if (dj1 != dj2)
+					koefYMul = dj2 / ky - j;
+
+				if (koefYMul == 1.f) // pixel devided by horizontal
+				{
+					tmp[(di1 + dj1 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * koefXMul;
+					tmp[(di1 + dj1 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * koefXMul;
+					tmp[(di1 + dj1 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * koefXMul;
+
+					mass[di1 + dj1 * Width] += koefXMul;
+
+					tmp[(di2 + dj1 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * (1.f - koefXMul);
+					tmp[(di2 + dj1 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * (1.f - koefXMul);
+					tmp[(di2 + dj1 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * (1.f - koefXMul);
+
+					mass[di2 + dj1 * Width] += (1.f - koefXMul);
+				}
+				else // pixel devided by horizontal and vertical
+				{
+					tmp[(di1 + dj1 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * koefXMul * koefYMul;
+					tmp[(di1 + dj1 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * koefXMul * koefYMul;
+					tmp[(di1 + dj1 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * koefXMul * koefYMul;
+
+					mass[di1 + dj1 * Width] += (koefXMul * koefYMul);
+
+					tmp[(di2 + dj1 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * (1.f - koefXMul) * koefYMul;
+					tmp[(di2 + dj1 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * (1.f - koefXMul) * koefYMul;
+					tmp[(di2 + dj1 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * (1.f - koefXMul) * koefYMul;
+
+					mass[di2 + dj1 * Width] += ((1.f - koefXMul) * koefYMul);
+
+					tmp[(di1 + dj2 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * koefXMul * (1.f - koefYMul);
+					tmp[(di1 + dj2 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * koefXMul * (1.f - koefYMul);
+					tmp[(di1 + dj2 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * koefXMul * (1.f - koefYMul);
+
+					mass[di1 + dj2 * Width] += (koefXMul * (1.f - koefYMul));
+
+					tmp[(di2 + dj2 * Width) * 4 + 0] += InputBuffer[(i + j * inputWidth) * 4 + 0] * (1.f - koefXMul) * (1.f - koefYMul);
+					tmp[(di2 + dj2 * Width) * 4 + 1] += InputBuffer[(i + j * inputWidth) * 4 + 1] * (1.f - koefXMul) * (1.f - koefYMul);
+					tmp[(di2 + dj2 * Width) * 4 + 2] += InputBuffer[(i + j * inputWidth) * 4 + 2] * (1.f - koefXMul) * (1.f - koefYMul);
+
+					mass[di2 + dj2 * Width] += ((1.f - koefXMul) * (1.f - koefYMul));
+				}
+			}
+		}
+	}
+	for (int j = 0; j < Height; ++j)
+	{
+		for (int i = 0; i < Width; ++i)
+		{
+			ResultBuffer[(i + j * Width) * 4 + 0] = tmp[(i + j * Width) * 4 + 0] / mass[i + j * Width];
+			ResultBuffer[(i + j * Width) * 4 + 1] = tmp[(i + j * Width) * 4 + 1] / mass[i + j * Width];
+			ResultBuffer[(i + j * Width) * 4 + 2] = tmp[(i + j * Width) * 4 + 2] / mass[i + j * Width];
+			ResultBuffer[(i + j * Width) * 4 + 3] = 255;
+		}
+	}
+	delete [] tmp;
+	delete [] mass;
 }

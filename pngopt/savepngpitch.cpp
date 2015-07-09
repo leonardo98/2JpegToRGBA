@@ -79,7 +79,7 @@ bool Write32BitPNGWithPitch(FILE* fp, void* pBits, bool bNeedAlpha, int nWidth, 
 	return true;
 }
 
-int png_texture_load(const char * file_name, int * width, int * height, unsigned char *&imageData)
+int png_texture_load(const char * file_name, int * width, int * height, unsigned char *&imageData, int * pitch)
 {
     png_byte header[8];
 
@@ -203,5 +203,10 @@ int png_texture_load(const char * file_name, int * width, int * height, unsigned
 	imageData = (unsigned char *)image_data;
     free(row_pointers);
     fclose(fp);
+
+	if (pitch)
+	{
+		*pitch = rowbytes;
+	}
     return 1;
 }
