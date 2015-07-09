@@ -92,7 +92,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		write32png(argv[4], ImageBuffer, Width, Height);
 
 	}
-	else if (task == "add" && argc == 7) 
+	else if (task == "add" && argc == 5) 
 	{
 		// вызываем для jpg цветного и для градаций серого - порядок вызова не важен
 		// функция не делает проверки на совпадение размеров, 
@@ -100,14 +100,16 @@ int _tmain(int argc, _TCHAR* argv[])
 		// и пишет данные либо в RGB(3 компоненты), либо только в альфа канал(1 компонента)
 
 		read_JPEG_file(argv[2], Width, Height, ImageBuffer); // исходный файл
+		char outputName[2000];
+		sprintf(outputName, "%s", argv[2]);
 
 		int outputWidth = atoi(argv[3]);
-		int outputHeight = atoi(argv[4]);
+		int outputHeight = outputWidth * float(Height) / Width;
 
 		int addWidth;
 		int addHeight;
 		unsigned char *addBuffer;
-		png_texture_load(argv[5], &addWidth, &addHeight, addBuffer);
+		png_texture_load(argv[4], &addWidth, &addHeight, addBuffer);
 
 		unsigned char *ResultBuffer  = new unsigned char [outputWidth * outputHeight * 4];
 
@@ -137,7 +139,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		JpegSaveQuality = 90;
-		write_JPEG_file(argv[6], JpegSaveQuality, outputWidth, outputHeight, rgb, 3);
+		write_JPEG_file(outputName, JpegSaveQuality, outputWidth, outputHeight, rgb, 3);
 		//write32png(argv[5], ResultBuffer, inputWidth, inputHeight);
 		delete [] addBuffer;
 		delete [] ResultBuffer;
